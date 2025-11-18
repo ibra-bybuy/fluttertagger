@@ -10,7 +10,7 @@ class TaggedText {
     required this.startIndex,
     required this.endIndex,
     required this.text,
-    this.extra = null,
+    this.extra,
   });
 
   @override

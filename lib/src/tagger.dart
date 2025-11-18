@@ -3,8 +3,6 @@ import 'package:fluttertagger/src/tag.dart';
 import 'package:fluttertagger/src/tagged_text.dart';
 import 'package:fluttertagger/src/trie.dart';
 
-import 'tagged_text.dart';
-
 /// {@macro builder}
 typedef FlutterTaggerWidgetBuilder = Widget Function(
   BuildContext context,
@@ -14,11 +12,7 @@ typedef FlutterTaggerWidgetBuilder = Widget Function(
 /// Formatter for tags in the [TextField] associated
 /// with [FlutterTagger].
 typedef TagTextFormatter = String Function(
-  String id,
-  String tag,
-  String triggerCharacter,
-  dynamic extra
-);
+    String id, String tag, String triggerCharacter, dynamic extra);
 
 ///{@macro searchCallback}
 typedef FlutterTaggerSearchCallback = void Function(
@@ -82,7 +76,7 @@ class FlutterTagger extends StatefulWidget {
     required this.controller,
     required this.onSearch,
     required this.builder,
-    required this.textStyle,
+    this.textStyle,
     this.extraOverlayYOffset,
     this.padding = EdgeInsets.zero,
     this.overlayHeight = 380,
@@ -94,6 +88,8 @@ class FlutterTagger extends StatefulWidget {
     this.triggerCharactersRegex,
     this.tagTextFormatter,
     this.animationController,
+    this.width,
+    this.left,
   })  : assert(
           triggerCharacterAndStyles != const {},
           "triggerCharacterAndStyles cannot be empty",
@@ -115,7 +111,7 @@ class FlutterTagger extends StatefulWidget {
 
   /// Text style used for calculating
   /// cursor position for overlay
-  final TextStyle textStyle;
+  final TextStyle? textStyle;
 
   /// Formats and replaces tags for raw text retrieval.
   /// By default, tags are replaced in this format:
@@ -173,6 +169,12 @@ class FlutterTagger extends StatefulWidget {
   /// {@macro triggerStrategy}
   final TriggerStrategy triggerStrategy;
 
+  /// width of container
+  final double? width;
+
+  /// left position
+  final double? left;
+
   @override
   State<FlutterTagger> createState() => _FlutterTaggerState();
 }
@@ -189,7 +191,8 @@ class _FlutterTaggerState extends State<FlutterTagger> {
   final OverlayPortalController _overlayController = OverlayPortalController();
 
   /// Formats tag text to include id
-  String _formatTagText(String id, String tag, String triggerCharacter, dynamic extra) {
+  String _formatTagText(
+      String id, String tag, String triggerCharacter, dynamic extra) {
     return widget.tagTextFormatter?.call(id, tag, triggerCharacter, extra) ??
         "@$id#$tag#";
   }
@@ -301,8 +304,8 @@ class _FlutterTaggerState extends State<FlutterTagger> {
         String formattedTagText = taggedText.text.replaceAll(triggerChar, "");
 
         TaggedText? savedTag;
-        for(final tag in _tags.keys) {
-          if(tag == taggedText) {
+        for (final tag in _tags.keys) {
+          if (tag == taggedText) {
             savedTag = tag;
             break;
           }
@@ -877,12 +880,11 @@ class _FlutterTaggerState extends State<FlutterTagger> {
       overlayChildBuilder: (context) {
         Offset offset = Offset.zero;
         double width = 0;
-        double height = 0;
 
         try {
-          final renderBox = _textFieldKey.currentContext!.findRenderObject() as RenderBox;
+          final renderBox =
+              _textFieldKey.currentContext!.findRenderObject() as RenderBox;
           width = renderBox.size.width;
-          height = renderBox.size.height;
           offset = renderBox.localToGlobal(Offset.zero);
         } catch (_) {}
 
@@ -902,7 +904,8 @@ class _FlutterTaggerState extends State<FlutterTagger> {
           textPainter.layout(maxWidth: width);
 
           final TextPosition textPosition = controller.selection.base;
-          Offset caretOffset = textPainter.getOffsetForCaret(textPosition, Rect.zero);
+          Offset caretOffset =
+              textPainter.getOffsetForCaret(textPosition, Rect.zero);
 
           var preferredLineHeight = textPainter.preferredLineHeight;
           Offset positiveOffset = Offset(
@@ -915,8 +918,8 @@ class _FlutterTaggerState extends State<FlutterTagger> {
         }
 
         return Positioned(
-          left: offset.dx,
-          width: width,
+          left: widget.left ?? offset.dx,
+          width: widget.width ?? width,
           height: widget.overlayHeight,
           top: top,
           child: widget.overlay,
@@ -978,8 +981,8 @@ class FlutterTaggerController extends TextEditingController {
         final tagText = tag.text.substring(1);
         final triggerCharacter = tag.text[0];
 
-        final formattedTagText =
-            _formatTagTextCallback?.call(id, tagText, triggerCharacter, tag.extra);
+        final formattedTagText = _formatTagTextCallback?.call(
+            id, tagText, triggerCharacter, tag.extra);
 
         if (formattedTagText != null) {
           final newText = subText.replaceRange(
@@ -1010,7 +1013,9 @@ class FlutterTaggerController extends TextEditingController {
   Function? _clearCallback;
   Function? _dismissOverlayCallback;
   Function(String id, String name, dynamic extra)? _addTagCallback;
-  String Function(String id, String tag, String triggerCharacter, dynamic extra)? _formatTagTextCallback;
+  String Function(
+          String id, String tag, String triggerCharacter, dynamic extra)?
+      _formatTagTextCallback;
 
   String _text = "";
 
@@ -1125,7 +1130,7 @@ class FlutterTaggerController extends TextEditingController {
   }
 
   /// Adds a tag.
-  void addTag({required String id, required String name, dynamic extra = null}) {
+  void addTag({required String id, required String name, dynamic extra}) {
     _addTagCallback?.call(id, name, extra);
   }
 
@@ -1146,13 +1151,16 @@ class FlutterTaggerController extends TextEditingController {
   }
 
   /// Registers callback for adding tags.
-  void _registerAddTagCallback(Function(String id, String name, dynamic extra) callback) {
+  void _registerAddTagCallback(
+      Function(String id, String name, dynamic extra) callback) {
     _addTagCallback = callback;
   }
 
   /// Registers callback for formatting tag texts.
   void _registerFormatTagTextCallback(
-    String Function(String id, String tag, String triggerCharacter, dynamic extra) callback,
+    String Function(
+            String id, String tag, String triggerCharacter, dynamic extra)
+        callback,
   ) {
     _formatTagTextCallback = callback;
   }

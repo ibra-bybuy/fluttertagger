@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
       title: 'FlutterTagger Demo',
       theme: ThemeData(
         textSelectionTheme: TextSelectionThemeData(
-          selectionColor: Colors.redAccent.withOpacity(.3),
+          selectionColor: Colors.redAccent.withValues(alpha: 0.3),
         ),
         primarySwatch: Colors.red,
       ),
@@ -107,7 +107,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
             "@": TextStyle(color: Colors.pinkAccent),
             "#": TextStyle(color: Colors.blueAccent),
           },
-          tagTextFormatter: (id, tag, triggerCharacter) {
+          tagTextFormatter: (id, tag, triggerCharacter, _) {
             return "$triggerCharacter$id#$tag#";
           },
           overlayHeight: overlayHeight,
