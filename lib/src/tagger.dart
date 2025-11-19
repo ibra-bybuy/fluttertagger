@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertagger/src/tag.dart';
-import 'package:fluttertagger/src/tagged_text.dart';
-import 'package:fluttertagger/src/trie.dart';
+import 'tag.dart';
+import 'tagged_text.dart';
+import 'trie.dart';
 
 /// {@macro builder}
 typedef FlutterTaggerWidgetBuilder = Widget Function(
-  BuildContext context,
-  GlobalKey key,
-);
+    BuildContext context, GlobalKey key);
 
 /// Formatter for tags in the [TextField] associated
 /// with [FlutterTagger].
 typedef TagTextFormatter = String Function(
-    String id, String tag, String triggerCharacter, dynamic extra);
+  String id,
+  String tag,
+  String triggerCharacter,
+  dynamic extra,
+);
 
 ///{@macro searchCallback}
 typedef FlutterTaggerSearchCallback = void Function(
-  String query,
-  String triggerCharacter,
-);
+    String query, String triggerCharacter);
 
 /// Indicates where the overlay should be positioned.
 enum OverlayPosition { top, bottom }
@@ -192,7 +192,11 @@ class _FlutterTaggerState extends State<FlutterTagger> {
 
   /// Formats tag text to include id
   String _formatTagText(
-      String id, String tag, String triggerCharacter, dynamic extra) {
+    String id,
+    String tag,
+    String triggerCharacter,
+    dynamic extra,
+  ) {
     return widget.tagTextFormatter?.call(id, tag, triggerCharacter, extra) ??
         "@$id#$tag#";
   }
@@ -435,16 +439,10 @@ class _FlutterTaggerState extends State<FlutterTagger> {
       _tagTrie.insert(taggedText);
 
       controller.selection = TextSelection.fromPosition(
-        TextPosition(
-          offset: offset + selectionOffset,
-        ),
+        TextPosition(offset: offset + selectionOffset),
       );
 
-      _recomputeTags(
-        oldCachedText,
-        newText,
-        taggedText.startIndex + 1,
-      );
+      _recomputeTags(oldCachedText, newText, taggedText.startIndex + 1);
 
       _onFormattedTextChanged();
     }
@@ -834,10 +832,7 @@ class _FlutterTaggerState extends State<FlutterTagger> {
 
       if (index < 0) return;
 
-      final query = text.substring(
-        index + 1,
-        endOffset + 1,
-      );
+      final query = text.substring(index + 1, endOffset + 1);
 
       _shouldHideOverlay(false);
       widget.onSearch(query, _currentTriggerChar);
@@ -904,8 +899,10 @@ class _FlutterTaggerState extends State<FlutterTagger> {
           textPainter.layout(maxWidth: width);
 
           final TextPosition textPosition = controller.selection.base;
-          Offset caretOffset =
-              textPainter.getOffsetForCaret(textPosition, Rect.zero);
+          Offset caretOffset = textPainter.getOffsetForCaret(
+            textPosition,
+            Rect.zero,
+          );
 
           var preferredLineHeight = textPainter.preferredLineHeight;
           Offset positiveOffset = Offset(
@@ -982,7 +979,11 @@ class FlutterTaggerController extends TextEditingController {
         final triggerCharacter = tag.text[0];
 
         final formattedTagText = _formatTagTextCallback?.call(
-            id, tagText, triggerCharacter, tag.extra);
+          id,
+          tagText,
+          triggerCharacter,
+          tag.extra,
+        );
 
         if (formattedTagText != null) {
           final newText = subText.replaceRange(
@@ -1014,8 +1015,11 @@ class FlutterTaggerController extends TextEditingController {
   Function? _dismissOverlayCallback;
   Function(String id, String name, dynamic extra)? _addTagCallback;
   String Function(
-          String id, String tag, String triggerCharacter, dynamic extra)?
-      _formatTagTextCallback;
+    String id,
+    String tag,
+    String triggerCharacter,
+    dynamic extra,
+  )? _formatTagTextCallback;
 
   String _text = "";
 
@@ -1035,10 +1039,7 @@ class FlutterTaggerController extends TextEditingController {
   /// [parser] -> Parser to extract id and tag name for regex matches.
   /// Returned list should have this structure: `[id, tagName]`.
   /// {@endtemplate}
-  void formatTags({
-    RegExp? pattern,
-    List<String> Function(String)? parser,
-  }) {
+  void formatTags({RegExp? pattern, List<String> Function(String)? parser}) {
     if (_triggerCharsPattern == null) {
       _formatTagsCallback = () => _formatTags(pattern, parser);
     } else {
@@ -1047,10 +1048,7 @@ class FlutterTaggerController extends TextEditingController {
   }
 
   /// {@macro formatTags}
-  void _formatTags([
-    RegExp? pattern,
-    List<String> Function(String)? parser,
-  ]) {
+  void _formatTags([RegExp? pattern, List<String> Function(String)? parser]) {
     _clearCallback?.call();
     _text = text;
     String newText = text;
@@ -1152,15 +1150,19 @@ class FlutterTaggerController extends TextEditingController {
 
   /// Registers callback for adding tags.
   void _registerAddTagCallback(
-      Function(String id, String name, dynamic extra) callback) {
+    Function(String id, String name, dynamic extra) callback,
+  ) {
     _addTagCallback = callback;
   }
 
   /// Registers callback for formatting tag texts.
   void _registerFormatTagTextCallback(
     String Function(
-            String id, String tag, String triggerCharacter, dynamic extra)
-        callback,
+      String id,
+      String tag,
+      String triggerCharacter,
+      dynamic extra,
+    ) callback,
   ) {
     _formatTagTextCallback = callback;
   }
@@ -1171,9 +1173,9 @@ class FlutterTaggerController extends TextEditingController {
     TextStyle? style,
     required bool withComposing,
   }) {
-    assert(!value.composing.isValid ||
-        !withComposing ||
-        value.isComposingRangeValid);
+    assert(
+      !value.composing.isValid || !withComposing || value.isComposingRangeValid,
+    );
 
     return _buildTextSpan(style);
   }
@@ -1227,10 +1229,7 @@ class FlutterTaggerController extends TextEditingController {
         String suffix = word.substring(taggedText.text.length);
 
         spans.add(
-          TextSpan(
-            text: taggedText.text,
-            style: _tagStyles[triggerChar],
-          ),
+          TextSpan(text: taggedText.text, style: _tagStyles[triggerChar]),
         );
         if (suffix.isNotEmpty) spans.add(TextSpan(text: suffix));
       } else {
@@ -1362,6 +1361,45 @@ class FlutterTaggerController extends TextEditingController {
     }
 
     return result;
+  }
+
+  /// Parses initial text for trigger characters and builds the internal tags/trie.
+  /// Use this for pre-filled text containing @tags.
+  void applyInitialText({
+    String? triggerChar = "@",
+    Map<String, String>? initialTags,
+  }) {
+    if (text.isEmpty) return;
+
+    _tags.clear();
+    _trie.clear();
+
+    // Use regex to find all @tags in the text
+    final pattern = RegExp(r'@\w+');
+    for (final match in pattern.allMatches(text)) {
+      final tagText = match.group(0)!; // e.g., "@John"
+      final startIndex = match.start;
+      final endIndex = match.end;
+
+      // Get the id from initialTags map if provided, otherwise use name
+      final id = initialTags != null
+          ? (initialTags[tagText.substring(1)] ?? tagText.substring(1))
+          : tagText.substring(1);
+
+      final tagged = TaggedText(
+        startIndex: startIndex,
+        endIndex: endIndex,
+        text: tagText,
+      );
+
+      _tags[tagged] = id;
+      _trie.insert(tagged);
+    }
+
+    // Update formatted text
+    _text = text;
+    // Optionally move cursor to end
+    selection = TextSelection.fromPosition(TextPosition(offset: text.length));
   }
 }
 
